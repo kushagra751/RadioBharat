@@ -61,6 +61,21 @@ const RadioList = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-6 pb-24">
+      {/* GitHub Profile Link */}
+      <div className="text-center mb-4">
+        <p className="text-gray-400">
+          Developed by{" "}
+          <a
+            href="https://github.com/kushagra751"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:underline"
+          >
+            Kushagra (GitHub)
+          </a>
+        </p>
+      </div>
+
       <h1 className="text-4xl font-bold text-center mb-6">📻 Indian Live Radio</h1>
       
       <div className="flex justify-center gap-6 mb-6">
