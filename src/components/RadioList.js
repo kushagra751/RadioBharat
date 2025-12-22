@@ -130,7 +130,7 @@ const RadioList = () => {
             </div>
           ))
         ) : (
-          <p className="text-center text-gray-400">Wait a second</p>
+          <p className="text-center text-gray-400">Wait a second....</p>
         )}
       </div>
 
