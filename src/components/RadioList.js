@@ -12,6 +12,8 @@ const RadioList = () => {
   const [selectedCategory, setSelectedCategory] = useState("");
   const [favorites, setFavorites] = useState([]);
   const [trendingStations, setTrendingStations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const fallbackImage = "https://th.bing.com/th/id/OIP.Z_7A1q5v_VswgbQ0X4WW1AAAAA?w=257&h=180&c=7&r=0&o=5&pid=1.7";
 
@@ -27,14 +29,20 @@ const RadioList = () => {
     ];
 
     axios
-      .get("https://de1.api.radio-browser.info/json/stations/bycountry/india?limit=1200")
+      .get("https://de1.api.radio-browser.info/json/stations/bycountry/india?limit=1200", { timeout: 20000 })
       .then((response) => {
-        let stationData = response.data.filter(station => station.url_resolved);
+        let stationData = (Array.isArray(response.data) ? response.data : [])
+          .filter(station => station.url_resolved)
+          .map(station => ({ ...station, name: station.name || "", tags: station.tags || "" }));
         setStations(stationData);
         setFilteredStations(stationData);
         setTrendingStations(stationData.filter(station => trendingStationNames.includes(station.name)));
       })
-      .catch((error) => console.error("Error fetching stations:", error));
+      .catch((err) => {
+        console.error("Error fetching stations:", err);
+        setError("Could not load stations. Please check your connection and try again.");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
@@ -92,13 +100,15 @@ const RadioList = () => {
 
       <div className="flex flex-wrap justify-center gap-4 mb-6">
         <input
-          type="text"
+          type="search"
+          aria-label="Search stations"
           placeholder="🔍 Search stations..."
           className="p-2 rounded-lg text-black w-64"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
         <select
+          aria-label="Filter by category"
           className="p-2 rounded-lg text-black"
           value={selectedCategory}
           onChange={(e) => setSelectedCategory(e.target.value)}
@@ -112,17 +122,23 @@ const RadioList = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {filteredStations.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-gray-400 col-span-full" role="status">Loading stations...</p>
+        ) : error ? (
+          <p className="text-center text-red-400 col-span-full" role="alert">{error}</p>
+        ) : filteredStations.length > 0 ? (
           filteredStations.map((station) => (
             <div key={station.stationuuid} className="bg-gray-800 p-4 rounded-xl shadow-lg transform hover:scale-105 transition duration-300">
-              <img src={station.favicon || fallbackImage} alt="Station Logo" className="w-full h-24 object-contain rounded-lg" />
+              <img src={station.favicon || fallbackImage} alt={`${station.name} logo`} loading="lazy" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = fallbackImage; }} className="w-full h-24 object-contain rounded-lg" />
               <h2 className="text-lg font-semibold mt-3 text-center">{station.name}</h2>
               <p className="text-sm text-gray-400 text-center">{station.tags || "Unknown Genre"}</p>
               <div className="flex justify-between mt-4">
-                <button onClick={() => setCurrentStation(station)} className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">
+                <button onClick={() => setCurrentStation(station)} aria-label={`Play ${station.name}`} className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg">
                   🎶 Play
                 </button>
-                <button onClick={() => toggleFavorite(station)} 
+                <button onClick={() => toggleFavorite(station)}
+                  aria-label={`${favorites.some(fav => fav.stationuuid === station.stationuuid) ? "Remove" : "Add"} ${station.name} ${favorites.some(fav => fav.stationuuid === station.stationuuid) ? "from" : "to"} favorites`}
+                  aria-pressed={favorites.some(fav => fav.stationuuid === station.stationuuid)}
                   className={`${favorites.some(fav => fav.stationuuid === station.stationuuid) ? "bg-red-500" : "bg-gray-500"} py-2 px-4 rounded-lg`}>
                   ❤
                 </button>
@@ -130,13 +146,13 @@ const RadioList = () => {
             </div>
           ))
         ) : (
-          <p className="text-center text-gray-400">No stations found.</p>
+          <p className="text-center text-gray-400 col-span-full">No stations found.</p>
         )}
       </div>
 
       {currentStation && (
         <div className="fixed bottom-0 left-0 right-0 bg-black text-white p-4 flex items-center shadow-lg">
-          <img src={currentStation.favicon || fallbackImage} alt="Station Logo" className="w-16 h-16 rounded-lg mr-4" />
+          <img src={currentStation.favicon || fallbackImage} alt={`${currentStation.name} logo`} onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = fallbackImage; }} className="w-16 h-16 rounded-lg mr-4" />
           <div>
             <h2 className="text-lg font-semibold">{currentStation.name}</h2>
             <p className="text-sm text-gray-400">{currentStation.tags || "Unknown Genre"}</p>

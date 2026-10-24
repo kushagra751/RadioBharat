@@ -1,3 +1,19 @@
+# Indian Live Radio
+
+A React app that streams Indian radio stations from the Radio Browser API.
+
+## Run locally
+
+```bash
+npm install
+npm start      # http://localhost:3000
+npm run build  # production build in ./build
+```
+
+No API keys or environment variables are required.
+
+---
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
